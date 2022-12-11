@@ -37,6 +37,7 @@ build/
 **lib/
 .cache/
 reference/
+external/
 .vs/
 **.sln
 **.vcxproj
