@@ -43,7 +43,14 @@ if (NOT Asio_FOUND)
     endif ()
 endif()
 
+link_libraries(asio)
+
 option(BUILD_COOKBOOK "build aiso cookbook" ON)
 if (BUILD_COOKBOOK)
     add_subdirectory(src/asio-cookbook)
 endif(BUILD_COOKBOOK)
+
+option(BUILD_OLC "build OneLoneCoder" ON)
+if (BUILD_OLC)
+    add_subdirectory(src/one_lone_coder)
+endif(BUILD_OLC)
