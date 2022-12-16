@@ -47,11 +47,114 @@ asio::streambuf는 std::streambuf를 상속하여 std의 스트림 클래스가 
 
 ## Writing to a TCP socket synchronously
 
+asio는 TCP 소켓에 동기적으로 데이터를 쓸 수 있다. asio에서 제공하는 쓰기 함수가 호출되면 호출한 스레드는 블럭된다. 쓰기함수는 데이터가 일부라도 소켓에 쓰이거나 오류가 발생할 경우 호출한 스레드의 블럭을 푼다.
+asio::ip::tcp::socket에서 제공하는 기본 쓰기 연산 방법은 write_some() 메서드이다. 이 메서드는 이름에서 알 수 있듯이 데이터의 일부를 소켓에 쓰고 성공할 경우 쓰는 데 성공한 바이트의 크기를 반환한다. 일반적으로 써야할 데이터가 큰 경우, 이 메서드를 여러 번 호출해야한다.
+asio::ip::tcp::socket에서 제공하는 send()라는 메서드는 소켓 연산을 제어하는 bit maskd인 flag를 반환해준다는 장점이 있지만 기본적으로는 write_some 메서드와 동작은 동일하다. 기본적으로 아래의 함수 정의 이외에도 다양한 오버로딩을 제공하니 확인해보자.
+
+```c++
+template<typename ConstBufferSequence>
+std::size_t write_some(const ConstBufferSequence &buffer);
+
+template<typename ConstBufferSequence>
+std::size_t send(const ConstBufferSequence &buffer, socket_base::message_flags flags);
+```
+
+하지만 위의 write_some 메서드는 얼마나 썼는지 확인하면서 여러 번 호출해야하기 때문에 사용자가 직접 코드를 작성할 경우 코드가 복잡하며, 오류가 발생하기 쉽다. 이를 보완하기 위해 asio::write() 메서드가 제공된다.
+
+```c++
+template<typename SyncWriteStream, typename ConstBufferSequence>
+std::size_t write(SyncWriteStream &s, const ConstBufferSequence &buffer);
+```
+
+SyncWriteStream이라는 명세를 만족하는 인자와 버퍼를 받아서 해당 스트림에 입력받은 버퍼를 쓰는 메서드이다.
+asio::ip::tcp::socket이 해당 명세를 만족하니 우리는 소켓을 첫번째 인자로 넣으면 된다. 이 메서드는 버퍼에 있느 모든 데이터를 소켓에 쓰는 작업을 해주기 때문에 코드가 간단명료하다.
+
 ## Reading from a TCP socket synchronously
+
+asio는 TCP 소켓에서 동기적으로 데이터를 읽는 기능을 지원한다. 동기적인 소켓 읽기 연산은 호출되면 호출한 스레드를 블럭하고 소켓에서 일부라도 데이터를 읽거나 오류가 발생하면 블럭을 해제하고 반환한다.
+
+asio::ip::tcp::socket에서 제공하는 기본 일기 연산 방법은 read_some() 메서드이다. 이 메서드는 이름에서 알 수 있듯이 데이터의 일부를 소켓에서 읽고 성공할 경우 읽는 데 성공한 바이트의 크기를 반환한다. 일반적으로 읽어야 할 데이터가 큰 경우, 이 메서드를 여러 번 호출해야한다.
+asio::ip::tcp::socket에서 제공하는 receive() 메서드는 소켓 연산을 제어하는 bit maskd인 flag를 반환해준다는 장점이 있지만 기본적으로는 read_some 메서드와 동작은 동일하다. 기본적으로 아래의 함수 정의 이외에도 다양한 오버로딩을 제공하니 확인해보자.
+
+```c++
+template<typename MutableBufferSequence>
+std::size_t read_some(const MutableBufferSequence &buffer);
+
+template<typename ConstBufferSequence>
+std::size_t receive(const MutalbeBufferSequence &buffer, socket_base::message_flags flags);
+```
+
+하지만 위의 read_some 메서드는 소켓 버퍼에서 얼마나 읽는지 확인하면서 여러 번 호출해야 전체 데이터를 읽을 수 있기 때문에 사용자가 직접 코드를 작성할 경우 코드가 복잡하며, 오류가 발생하기 쉽다. 이를 보완하기 위해 asio::read() 메서드가 제공된다.
+
+```c++
+template<typename SyncReadStream, typename MutalbeBufferSequence>
+std::size_t read(SyncReadStream &s, const MutableBufferSequence &buffer);
+```
+
+SyncReadStream이라는 명세를 만족하는 인자와 버퍼를 받아서 해당 스트림에 입력받은 버퍼를 쓰는 메서드이다.
+asio::ip::tcp::socket이 해당 명세를 만족하니 우리는 소켓을 첫번째 인자로 넣으면 된다. 이 메서드는 소켓 버퍼에 있는 모든 데이터를 읽는 작업을 해주기 때문에 코드가 간단명료하다.
+
+소켓에 쓰여진 데이터를 스트림 기반의 확장 가능한 버퍼인 streambuf로 받아서 특정 구분자 (delimeter)를 만날 때까지 읽는 함수도 제공된다. 소켓 버퍼에서 데이터를 읽어서 해당 데이터를 버퍼인 b에 쓴다. 이 때, (일부) 읽은 데이터에 구분자가 포함되면 동작을 중지한다. 당연히 구분자 다음에도 데이터가 일부 들어가 있기 때문에 읽어들인 데이터 전체가 아니라 적절히 해석 (parsing)하여 데이터를 추출해야 한다.
+
+```c++
+template<typename SyncReadStream, typename Allocator>
+std::size_t read_until(SyncReadStream &s, asio::basic_streambuf<Allocator> &b, char delim);
+```
+
+SyncReadStream이라는 명세를 만족하는 인자와 버퍼를 받아서 해당 스트림에 입력받은 버퍼를 쓰는 메서드이다.
+asio::ip::tcp::socket이 해당 명세를 만족하니 우리는 소켓을 첫번째 인자로 넣으면 된다. 이 메서드는 소켓 버퍼에 있는 모든 데이터를 읽는 작업을 해주기 때문에 코드가 간단명료하다.
+
+소켓에 쓰여진 데이터를 스트림 기반의 확장 가능한 버퍼인 streambuf로 받아서 특정 구분자 (delimeter)를 만날 때까지 읽는 함수도 제공된다. 소켓 버퍼에서 데이터를 읽어서 해당 데이터를 버퍼인 b에 쓴다. 이 때, (일부) 읽은 데이터에 구분자가 포함되면 동작을 중지한다. 당연히 구분자 다음에도 데이터가 일부 들어가 있기 때문에 읽어들인 데이터 전체가 아니라 적절히 해석 (parsing)하여 데이터를 추출해야 한다.
+
+소켓에서 데이터를 읽을 때 지정한 오프셋부터 읽을 수 있는 함수인 read_at 메서드도 제공된다. 하지만 잘 사용하지 않으므로 간단히 정리한다.
+
+```c++
+template <typename SyncRandomAccessReadDevice, typename MutableBufferSequence>
+inline std::size_t read_at(SyncRandomAccessReadDevice& d,
+    uint64_t offset, const MutableBufferSequence& buffers)
+```
 
 ## Writing to a TCP socket asynchronously
 
+비동기 쓰기 연산은 원격 앱에 데이터를 보내는 유연하고 효율적인 방법이다. 비동기 쓰기 연산은 호출한 스레드를 블럭하지 않고 바로 반환되기 때문에 호출 스레드에서 다른 연산을 수행할 수 있다. 비동기 쓰기 연산은 호출과 동시에 호출한 스레드 정보를 라이브러리로 전달하고 비동기 쓰기 연산의 인자로 전달된 콜백함수를 실행한다. 콜백함수가 종료되면 이벤트에 의하여 반환값이 라이브러리에서 저장하고 있던 스레드로 전달된다.
+
+asio에서 제공하는 기본 비동기 쓰기 연산은 async_write_some 메서드이다. 이 메서드는 호출과 동시에 곧바로 반환된다. 입력인자는 비동기르 쓸 데이터가 저장된 버퍼와 비동기 쓰기 연산에 사용할 콜백 함수 2가지이다. 동기 연산과 마찬가지로 오류없이 끝난다면 적어도 한 바이트는 쓰였다는 것만 보장하므로 쓰려는 데이터가 클 경우 동일하게 여러번 호출해야 한다.
+
+```c++
+template<typenamce ConstBufferSequence, typename WriteHandler>
+void async_write_some(const ConstBufferSequence &buffer, WriteHandler handler);
+```
+
+콜백함수인 WriteHandler는 다음과 같은 서명을 가져야 한다.
+
+```c++
+void wirte_handler(const asio::error_code &ec, std::size_t bytes_transffered);
+```
+
+WriteHandler가 동작을 할 때 필요한 정보들이 있는 경우가 많다. 이 경우는 콜백 함수에 해당 정보를 인자로 추가한 함수를 만들고 WriteHandler에는 해당 인자를 비동기 연산 호출 시 std::bind를 이용하여 전달하는 방법을 사용하면 매우 편리하다.
+
+asio의 비동기 연산은 asio::io_context::run() 메서드와 함께 사용해야 한다. 해당 메서드는 비동기 연산을 호출한 스레드가 비동기 연산을 실제 수행하는 스레드보다 먼저 종료되지 않도록 호출 스레드를 블럭하고 비동기 연산이 모두 종료되면 블럭을 해제한다.
+
 ## Reading from a TCP socket asynchronously
+
+비동기 읽기 연산은 원격 앱에 보내어 서버의 소켓 버퍼에 저장되어 있는 데이터를 읽는 유연하고 효율적인 방법이다. 비동기 읽기 연산은 호출한 스레드를 블럭하지 않고 바로 반환되기 때문에 호출 스레드에서 다른 연산을 수행할 수 있다. 비동기 읽기 연산은 호출과 동시에 호출한 스레드 정보를 라이브러리로 전달하고 비동기 읽기 연산의 인자로 전달된 콜백함수를 실행한다. 콜백함수가 종료되면 이벤트에 의하여 반환값이 라이브러리에서 저장하고 있던 스레드로 전달된다.
+
+asio에서 제공하는 기본 비동기 읽기 연산은 async_read_some 메서드이다. 이 메서드는 호출과 동시에 곧바로 반환된다. 입력인자는 비동기르 읽을 데이터를 저장할 버퍼와 비동기 읽기 연산에 사용할 콜백 함수 2가지이다. 동기 연산과 마찬가지로 오류없이 끝난다면 적어도 한 바이트는 읽었다는 것만 보장하므로 쓰려는 데이터가 클 경우 동일하게 여러번 호출해야 한다.
+
+```c++
+template<typenamce MutableBufferSequence, typename ReadHandler>
+void async_write_some(const MutableBufferSequence &buffer, ReadHandler handler);
+```
+
+콜백함수인 ReadHandler는 다음과 같은 서명을 가져야 한다.
+
+```c++
+void read_handler(const asio::error_code &ec, std::size_t bytes_transffered);
+```
+
+ReadHandler가 동작을 할 때 필요한 정보들이 있는 경우가 많다. 이 경우는 콜백 함수에 해당 정보를 인자로 추가한 함수를 만들고 ReadHandler에는 해당 인자를 비동기 연산 호출 시 std::bind를 이용하여 전달하는 방법을 사용하면 매우 편리하다.
+
+asio의 비동기 연산은 asio::io_context::run() 메서드와 함께 사용해야 한다. 해당 메서드는 비동기 연산을 호출한 스레드가 비동기 연산을 실제 수행하는 스레드보다 먼저 종료되지 않도록 호출 스레드를 블럭하고 비동기 연산이 모두 종료되면 블럭을 해제한다.
 
 ## Canceling asynchronous operations
 

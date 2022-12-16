@@ -16,8 +16,9 @@
 
 int main() {
     // Step 1. 클라이언트 프로그램이 서버 프로그램의 DNS 이름과 포트 번호를 안다고 가정
-    std::string host   = "naver.com";
-    std::string sevice = "https";
+    // std::string host   = "naver.com";
+    std::string host   = "example.com";
+    std::string sevice = "http";
 
     // Step 2.
     asio::io_context ioc;

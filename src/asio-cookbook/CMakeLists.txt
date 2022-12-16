@@ -15,3 +15,6 @@ add_executable(asio1_accept_connection ch1_intro/accept_connection.cpp)
 ## ch2. I/O
 add_executable(asio2_fixed_length_buffer ch2_io/fixed_length_buffer.cpp)
 add_executable(asio2_extensible_streambuffer ch2_io/extensible_streambuffer.cpp)
+add_executable(asio2_write_to_tcp_sync ch2_io/write_to_tcp_sync.cpp)
+add_executable(asio2_read_from_tcp_sync ch2_io/read_from_tcp_sync.cpp)
+add_executable(asio2_write_to_tcp_async ch2_io/write_to_tcp_async.cpp)

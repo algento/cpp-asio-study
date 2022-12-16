@@ -43,7 +43,7 @@ int main() {
         // Failed to bind the acceptor socket. Breaking execution.
         std::cout << "Failed to connect  the socket."
                   << "Error code = " << ec.value()
-                  << ". Message: " << ec.message();
+                  << ". Message: " << ec.message() << std::endl;
 
         return ec.value();
     }

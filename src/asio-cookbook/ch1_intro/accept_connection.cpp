@@ -19,10 +19,14 @@ int main() {
 
     // Step 1. Here we assume that the server application has
     // already obtained the protocol port number.
-    unsigned short port_num = 3333;
+    unsigned short port_num    = 3333;
+    std::string raw_ip_address = "127.0.0.1";
 
     // Step 2. Creating a server endpoint.
-    asio::ip::tcp::endpoint ep(asio::ip::address_v4::any(), port_num);
+    // asio::ip::tcp::endpoint ep(asio::ip::address_v4::any(), port_num);
+
+    asio::ip::address ip_address = asio::ip::make_address(raw_ip_address);
+    asio::ip::tcp::endpoint ep(ip_address, port_num);
 
     asio::io_context ioc;
 

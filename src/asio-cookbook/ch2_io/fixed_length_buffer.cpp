@@ -12,6 +12,8 @@
 
 #include <asio.hpp>
 
+#include "asio/read_at.hpp"
+
 int main() {
     //* ---------------------------------------------------------------------*//
     //* output buffer
@@ -30,8 +32,8 @@ int main() {
     // operations.
 
     std::cout << "size: " << output_buf.size() << std::endl;
-    for (int i = 0; i < output_buf.size(); ++i) {
-        std::cout << *(static_cast<const char*>(output_buf.data()) + i);
+    for (size_t i = 0; i < output_buf.size(); ++i) {
+        std::cout << *(static_cast<const char *>(output_buf.data()) + i);
     }
     std::cout << std::endl;
 
@@ -53,7 +55,7 @@ int main() {
     // MutableBufferSequence concept requirements.
     //* asio::buffer(void*, size_t) overloading
     asio::mutable_buffer input_buf =
-        asio::buffer(static_cast<void*>(buf2.get()), BUF_SIZE_BYTES);
+        asio::buffer(static_cast<void *>(buf2.get()), BUF_SIZE_BYTES);
 
     // Step 3. 'input_buf' is the representation of the buffer
     // 'buf' that can be used in Boost.Asio input operations.
