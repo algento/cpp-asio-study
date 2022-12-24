@@ -54,3 +54,8 @@ option(BUILD_OLC "build OneLoneCoder" ON)
 if (BUILD_OLC)
     add_subdirectory(src/one_lone_coder)
 endif(BUILD_OLC)
+
+option(BUILD_ETC "build etc." ON)
+if (BUILD_ETC)
+    add_subdirectory(src/etc)
+endif(BUILD_ETC)

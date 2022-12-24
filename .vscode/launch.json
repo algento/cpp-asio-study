@@ -4,7 +4,7 @@
             "name": "(lldb) 시작",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/bin/olc_simple_client",
+            "program": "${workspaceFolder}/bin/asio2_cancel_async_operation",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${fileDirname}",
