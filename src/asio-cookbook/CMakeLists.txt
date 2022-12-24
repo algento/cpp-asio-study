@@ -1,5 +1,3 @@
-link_libraries(asio)
-
 ## ch1. Intro.
 add_executable(asio1_endpoint_client ch1_intro/endpoint_client.cpp)
 add_executable(asio1_endpoint_server ch1_intro/endpoint_server.cpp)
@@ -18,3 +16,14 @@ add_executable(asio2_extensible_streambuffer ch2_io/extensible_streambuffer.cpp)
 add_executable(asio2_write_to_tcp_sync ch2_io/write_to_tcp_sync.cpp)
 add_executable(asio2_read_from_tcp_sync ch2_io/read_from_tcp_sync.cpp)
 add_executable(asio2_write_to_tcp_async ch2_io/write_to_tcp_async.cpp)
+add_executable(asio2_cancel_async_operation ch2_io/cancel_async_operation.cpp)
+
+add_executable(asio2_socket_shutdown_server ch2_io/socket_shutdown_server.cpp)
+add_executable(asio2_socket_shutdown_client ch2_io/socket_shutdown_client.cpp)
+add_executable(asio2_socket_shutdown_client1 ch2_io/socket_shutdown_client1.cpp)
+
+## ch3. client
+add_executable(asio3_sync_tcp_client ch3_client/sync_tcp_client.cpp)
+add_executable(asio3_sync_udp_client ch3_client/sync_udp_client.cpp)
+add_executable(asio3_async_tcp_client ch3_client/async_tcp_client.cpp)
+add_executable(asio3_async_tcp_client_mt ch3_client/async_tcp_client_mt.cpp)
