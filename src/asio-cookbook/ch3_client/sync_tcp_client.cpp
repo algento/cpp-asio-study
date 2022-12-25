@@ -82,7 +82,7 @@ int main() {
         // Close the connection and free resources.
         client.Close();
     } catch (asio::system_error& e) {
-        std::cout << "Error occured! Error code = " << e.code()
+        std::cout << "Error occured in main! Error code = " << e.code()
                   << ". Message: " << e.what();
 
         return e.code().value();

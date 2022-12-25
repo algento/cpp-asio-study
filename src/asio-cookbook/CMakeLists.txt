@@ -27,3 +27,8 @@ add_executable(asio3_sync_tcp_client ch3_client/sync_tcp_client.cpp)
 add_executable(asio3_sync_udp_client ch3_client/sync_udp_client.cpp)
 add_executable(asio3_async_tcp_client ch3_client/async_tcp_client.cpp)
 add_executable(asio3_async_tcp_client_mt ch3_client/async_tcp_client_mt.cpp)
+
+## ch4. server
+add_executable(asio4_sync_iterative_tcp_server ch4_server/sync_iterative_tcp_server.cpp)
+add_executable(asio4_sync_parallel_tcp_server ch4_server/sync_parallel_tcp_server.cpp)
+add_executable(asio4_async_parallel_tcp_server ch4_server/async_parallel_tcp_server.cpp)
