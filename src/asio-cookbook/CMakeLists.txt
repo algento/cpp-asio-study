@@ -32,3 +32,7 @@ add_executable(asio3_async_tcp_client_mt ch3_client/async_tcp_client_mt.cpp)
 add_executable(asio4_sync_iterative_tcp_server ch4_server/sync_iterative_tcp_server.cpp)
 add_executable(asio4_sync_parallel_tcp_server ch4_server/sync_parallel_tcp_server.cpp)
 add_executable(asio4_async_parallel_tcp_server ch4_server/async_parallel_tcp_server.cpp)
+
+## ch6. etc
+add_executable(asio6_timer_example ch6_etc/timer_example.cpp)
+add_executable(asio6_socket_option ch6_etc/socket_option.cpp)
