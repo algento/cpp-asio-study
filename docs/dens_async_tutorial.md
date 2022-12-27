@@ -158,3 +158,128 @@ private:
     io::io_context::strand write;
 }
 ```
+
+위와 같이 N 개의 스레드에서 하나의 io_context를 공유하여 사용하는 것이 아니라 io_context하나와 스레드 하나를 짝으로 사용할 수도 있다.
+이 경우 각 스레드는 자신만의 io_context를 가진다. 이 경우는 동일한 io_context에서 동일한 공유 자원에 접근한다면 별도의 strand를 사용한 동기화가 필요하지 않다.
+동일 io_context에 묶인 completion handler는 단일 스레드로 동작하기 때문에 연산의 균형 (balancing)은 개발자가 직접 고려해야 한다. 따라서 기본적으로 전자의 방법을 고려하고 랜덤하고 가벼운 작업이 많지 않고 특수한 방식으로 사용하는 경우 후자의 방법을 고려해라.
+
+```C++
+namespace io = asio;
+using tcp = io::ip::tcp;
+using work_guard_type = io::executor_work_guard<io::io_context::executor_type>;
+using error_code = asio::error_code;
+
+class io_context_group
+{
+public:
+
+    io_context_group(std::size_t size)
+    {
+        // Create io_context and work guard pairs
+        for(std::size_t n = 0; n < size; ++n)
+        {
+            contexts.emplace_back(std::make_shared<io::io_context>());
+            guards.emplace_back(std::make_shared<work_guard_type>(contexts.back()->get_executor()));
+        }
+    }
+
+    void run()
+    {
+        // Create threads
+        for(auto& io_context : contexts)
+        {
+            threads.emplace_back([&]
+            {
+                io_context->run();
+            });
+        }
+
+        // Join threads
+        for(auto& thread : threads)
+        {
+            thread.join();
+        }
+    }
+
+    // Round-robin io_context& query
+    // context 컨터이너를 반복하면서 io_context를 가져온다.
+    // 소켓 객체를 생성할 때, query() 함수를 호출해서 io_context를 돌아가면 사용한다.
+    io::io_context& query()
+    {
+        return *contexts[index++ % contexts.size()];
+    }
+
+private:
+
+    template <typename T>
+    using vector_ptr = std::vector<std::shared_ptr<T>>;
+
+    /** io_context, work_guard, thread를 하나의 그룹으로 생각한다.
+    */
+    vector_ptr<io::io_context> contexts;
+    vector_ptr<work_guard_type> guards;
+    std::vector<std::thread> threads;
+
+    std::atomic<std::size_t> index = 0;
+};
+
+int main()
+{
+    io_context_group group(std::thread::hardware_concurrency() * 2);
+    tcp::socket socket(group.query());
+    // Schedule some tasks
+    group.run();
+    return 0;
+}
+```
+
+## Timer
+
+asio가 제공하는 타이머에는 다음의 4가지 종류가 있지만 대부분 유사한 기능을 제공한다. 차이라면 deadline_timer는 posix_time을 이용한 것이고, 나머지는 std::chrono에 기반한 것이라는 점이다.
+
+```C++
+asio::deadline_timer
+asio::high_resolution_timer
+asio::steady_timer
+asio::system_timer
+```
+
+아래의 예제에서 볼 수 있듯이 asio::timer는 io_context 객체에 연관하여 사용하고 타이머와 관련된 handler는 io_context::run()의 이벤트 루프에 등록된다.
+
+```c++
+namespace io = boost::asio;
+using error_code = boost::system::error_code;
+
+io::io_context io_context;
+
+// A timer should be constructed from io_context reference
+io::high_resolution_timer timer(io_context);
+
+auto now()
+{
+    return std::chrono::high_resolution_clock::now();
+}
+
+auto begin = now();
+
+void async_wait()
+{
+    // Set the expiration duration
+    timer.expires_after(std::chrono::seconds(1));
+
+    // Wait for the expiration asynchronously
+    timer.async_wait([&] (error_code error)
+    {
+        auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(now() - begin).count();
+        std::cout << elapsed << "\n";
+        async_wait();
+    });
+}
+
+int main()
+{
+    async_wait();
+    io_context.run();
+    return 0;
+}
+```
